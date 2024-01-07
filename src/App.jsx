@@ -1,32 +1,33 @@
 import "./App.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import store from "./store/store";
+import * as actionCreators from "./actions/actions";
 
 export default function App() {
   const [desc, setDesc] = useState("");
+  const [bugList, setBugList] = useState([]);
 
-  store.subscribe(() => {
-    console.log("CHANGED", store.getStore());
+  const unsubscribe = store.subscribe(() => {
+    console.log("CHANGED", store.getState());
   });
 
-  const AddBug = () => {
-    store.dispatch({
-      type: "ADD_BUG",
-      payload: {
-        description: desc,
-      },
+  useEffect(() => {
+    store.subscribe(() => {
+      setBugList(store.getState());
     });
-    // console.log(store.getState());
+  }, []);
+
+  const AddBug = () => {
+    store.dispatch(actionCreators.bugAdded(desc));
+    // unsubscribe();
   };
 
   const DeleteBug = () => {
-    store.dispatch({
-      type: "REMOVE_BUG",
-      payload: {
-        id: 2,
-      },
-    });
-    // console.log(store.getState());
+    store.dispatch(actionCreators.bugRemoved(3));
+  };
+
+  const changeStatus = (id) => {
+    store.dispatch(actionCreators.bugStatusChanged(id));
   };
 
   return (
@@ -34,6 +35,13 @@ export default function App() {
       <input type="text" onChange={(e) => setDesc(e.target.value)} />
       <button onClick={AddBug}>Add</button>
       <button onClick={DeleteBug}>Delete</button>
+
+      {bugList.map((i) => (
+        <div onClick={() => changeStatus(i.id)}>
+          <p>{i.resolved ? "Resolved" : "Not Resolved"}</p>
+          <p>{i.description}</p>
+        </div>
+      ))}
     </main>
   );
 }
